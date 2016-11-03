@@ -64,8 +64,9 @@ lok.centar <- c(lon = mean(okz$lon, na.rm = TRUE), lat = mean(okz$lat, na.rm = T
 
 map.hr <- get_map(location = lok.centar, zoom = 7)
 
-ggmap(map.hr) +
+map.plot <- ggmap(map.hr) +
   geom_point(data = okz, aes(lon, lat), size = .2, alpha = .5, colour = "pink2") +
-  geom_density2d(data = okz, aes(lon, lat))
+  geom_density2d(data = okz, aes(lon, lat)) +
+  labs(title = now())
 
-ggsave("/home/ivan/Dropbox/progress.pdf")
+ggsave("/home/ivan/Dropbox/progress.pdf", plot = map.plot)
