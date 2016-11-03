@@ -1,0 +1,41 @@
+---
+title: "geokodiranje danima..."
+output: html_notebook
+---
+
+Try executing the chunk by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+Add a new chunk by pressing *Ctrl+Alt+I*.
+```{r setup, echo=FALSE}
+library(stringr)
+library(readxl)
+library(purrr)
+library(dplyr)
+setwd("Dropbox/")
+```
+
+```{r geocoded data import}
+okz <- list.files()[str_detect(list.files(), "\\.xlsx")] %>% 
+  map_df(read_excel)
+```
+
+Uspješno geokodiranih do sada:
+```{r}
+(!is.na(okz$lon)) %>% sum(na.rm = TRUE)
+```
+
+
+```{r mapping}
+library(ggmap)
+
+lok.centar <- c(lon = mean(okz$lon, na.rm = TRUE), lat = mean(okz$lat, na.rm = TRUE) - 1)
+
+map.hr <- get_map(location = lok.centar, zoom = 7)
+  
+ggmap(map.hr) +
+  geom_point(data = okz, aes(lon, lat), size = .2, alpha = .5, colour = "pink2") +
+  geom_density2d(data = okz, aes(lon, lat))
+
+```
+
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (press *Ctrl+Shift+K* to preview the HTML file).
