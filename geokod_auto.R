@@ -51,5 +51,5 @@ save(udr.split, file = "geok.udr")
 ime.fajla <- paste(today(), "udruge_geokod.xlsx", sep = "__")
 openxlsx::write.xlsx(udr.split[mii][[1]], ime.fajla)
 
-
+ggmap::get_map()
 
