@@ -67,5 +67,6 @@ map.hr <- get_map(location = lok.centar, zoom = 7)
 ggmap(map.hr) +
   geom_point(data = okz, aes(lon, lat), size = .2, alpha = .5, colour = "pink2") +
   geom_density2d(data = okz, aes(lon, lat))
+  # geom_bin2d(data = okz, aes(lon, lat), binwidth = c(0.1, 0.1))
 
 ggsave("/home/ivan/Dropbox/progress.pdf")
