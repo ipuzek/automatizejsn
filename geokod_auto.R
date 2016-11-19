@@ -44,6 +44,14 @@ geok_mutate_google <- function(x.df, lokacija, source = "google") {
   
 }
 
+# maknuti prazna sjedišta # (brejkaju skriptu)
+
+udr.split <- udr.split %>% 
+  # map(as_tibble) %>% 
+  map(~ filter(.x, !is.na(SJEDISTE)))
+
+# map(udr.split, nrow) $u je imao 1 prazno sjedište 
+
 mii <- map(udr.split, function(x) is.null(x$lon)) %>% unlist()
 
 udr.split[mii][[1]] <- geok_mutate_google(udr.split[mii][[1]], "SJEDISTE")
@@ -69,6 +77,5 @@ map.plot <- ggmap(map.hr) +
   # geom_bin2d(data = okz, aes(lon, lat), binwidth = c(0.1, 0.1)) # radi, ali ružno
   geom_density2d(data = okz, aes(lon, lat)) +
   labs(title = now())
-
 
 ggsave("/home/ivan/Dropbox/progress.pdf", plot = map.plot)
