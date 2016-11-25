@@ -97,7 +97,7 @@ ggmap(map.hr) +
 ### nominatim via R
 library(nominatim)
 
-nominatim_naselje <- udr.df %>% 
+nominatim_naselje <- udr.df %>%
   filter(is.na(lon)) %>% 
   select(REGISTARSKI_BROJ, SJEDISTE) %>% 
   mutate(SJEDISTE_naselje = str_split_fixed(SJEDISTE, ",", 2)[,1])
@@ -114,7 +114,11 @@ osm_geocode_proper <- function(x, country_codes = "hr", key = "FSMW1t398TEU44Fmo
   if (nrow(osm.geo.df) == 0) data_frame(lon = NA) else osm.geo.df 
 }
 
-dajjjj <- map_df(nominatim_naselje$SJEDISTE_naselje, osm_geocode_proper) %>% as_data_frame()
+dajjjj <- map_df(nominatim_naselje$SJEDISTE_naselje, osm_geocode_proper) %>%
+  as_data_frame() %>% 
+  na.omit
+
+save(dajjjj, file = "nominatim.geocoded")
 
 # mali check ====
 ggmap(map.hr) +
@@ -124,10 +128,15 @@ ggmap(map.hr) +
   labs(title = "nominatim - samo naselja")
 # kraj malog čeka =====
 
-udr.df.nominatim <- nominatim_naselje %>% 
-  cbind(dajjjj) %>% 
-  select(REGISTARSKI_BROJ, SJEDISTE, SJEDISTE_naselje, lat, lon) %>% 
+nominatim.to.merge <- nominatim_naselje %>% 
+  cbind(dajjjj) %>%
+  select(REGISTARSKI_BROJ, SJEDISTE, lat, lon) %>%
+  na.omit %>% 
   as_tibble()
+
+nominatim.to.rbind <- filter(udr.df, is.na(lon)) %>% 
+  select(-lon, -lat) %>% 
+  left_join(nominatim.to.merge)
 
 udr.df.google2 <- udr.df.nominatim %>% 
   filter(is.na(lon)) %>% 
@@ -135,7 +144,7 @@ udr.df.google2 <- udr.df.nominatim %>%
   select(REGISTARSKI_BROJ, SJEDISTE, SJEDISTE_naselje) %>% 
   geok_mutate_google("SJEDISTE_naselje")
 
-
+save(udr.df.google2, file = "google2.geocoded")
 
 udr.df.google3 <- udr.df.nominatim %>% 
   filter(is.na(lon)) %>% 
@@ -143,6 +152,30 @@ udr.df.google3 <- udr.df.nominatim %>%
   select(REGISTARSKI_BROJ, SJEDISTE, SJEDISTE_naselje) %>% 
   geok_mutate_google("SJEDISTE_naselje")
 
-rbind(udr.df.nominatim, udr.df.google2)
+to.merge <- rbind(
+  udr.df.nominatim,
+  udr.df.google2
+  ) %>% 
+  filter(!is.na(lon))
 
-n_na(udr.df.google2$lon)
+merged <- filter(udr.df, is.na(lon)) %>% 
+  select(-lon, -lat) %>% 
+  left_join(to.merge) %>% 
+  select(- SJEDISTE_naselje)
+
+skoro.sve.df <- rbind(
+  filter(udr.df, !is.na(lon)),
+  merged
+  )
+
+
+
+#
+
+lok.centar <- c(lon = mean(skoro.sve.df$lon, na.rm = TRUE), lat = mean(skoro.sve.df$lat, na.rm = TRUE) - 1)
+
+ggmap(get_map(location = lok.centar, zoom = 7)) +
+  geom_point(data = skoro.sve.df, aes(lon, lat), size = .2, alpha = .5, colour = "pink2") +
+  # geom_bin2d(data = okz, aes(lon, lat), binwidth = c(0.1, 0.1)) # radi, ali ružno
+  geom_density2d(data = skoro.sve.df, aes(lon, lat)) +
+  labs(title = now())
